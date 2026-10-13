@@ -29,9 +29,14 @@ thread_local! {
 async fn html_to_markdown(_lua: Lua, html: LuaString) -> LuaResult<Pair<String>> {
     let html = try_pair!(html.to_str()).to_owned();
     Ok(pair(
-        smol::unblock(move || htmd::convert(&html))
-            .await
-            .map_err(|e| format!("html_to_markdown: {e}")),
+        smol::unblock(move || {
+            htmd::HtmlToMarkdown::builder()
+                .skip_tags(vec!["script", "style", "noscript"])
+                .build()
+                .convert(&html)
+        })
+        .await
+        .map_err(|e| format!("html_to_markdown: {e}")),
     ))
 }
 
